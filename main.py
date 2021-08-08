@@ -1,5 +1,6 @@
 from tkinter import *
 from tkinter import ttk
+from tkinter import messagebox
 
 root = Tk()
 root.title('Appointment system')
@@ -21,12 +22,24 @@ def changePage(screen):
             tabs.select(i+1)
 
 
+def handleSubmit():
+    userId = userIdVar.get()
+    if(userId):
+        print(userId)
+    else:
+        messagebox.showerror('Invalid', 'Please enter a valid user ID')
+
+
 # screens
 ###########################
 home_Screen = Frame(tabs)
 existingUser_Screen = Frame(tabs)
 newUser_Screen = Frame(tabs)
 generateToken_Screen = Frame(tabs)
+
+scrollbar = Scrollbar(tabs)
+scrollbar.pack(side=RIGHT, fill=Y)
+
 ###########################
 
 # adding screens to tabs
@@ -55,6 +68,34 @@ Button(buttons_Frame, text='Appointment for new user', width=25,
        font=20, command=lambda: changePage('newUser')).pack(pady=8)
 Button(buttons_Frame, text='Generate token',
        command=lambda: changePage('token'), width=25, font=20).pack(pady=8)
+###########################
+
+# existing user screen
+###########################
+container_Frame = Frame(existingUser_Screen)
+container_Frame.place(relx=0.5, rely=0.35, anchor=CENTER)
+
+heading_Label = Label(
+    container_Frame, text='Existing user appointment', font='comicsans 20 underline')
+heading_Label.pack()
+
+form_Frame = Frame(existingUser_Screen, borderwidth=3,
+                   relief=SUNKEN, )
+form_Frame.place(relx=0.5, rely=0.5, anchor=CENTER, )
+
+userIdVar = StringVar()
+
+userId_Entry = Entry(form_Frame, font="comicsans 15", textvariable=userIdVar)
+userId_Label = Label(form_Frame, text='User ID', font="comicsans 15")
+
+userId_Label.grid(row=0, column=0, pady=10, padx=10)
+userId_Entry.grid(row=0, column=1, pady=10, padx=10)
+
+submit_Button = Button(form_Frame, text='Submit',
+                       command=handleSubmit, font="comicsans 14")
+submit_Button.grid(row=1, column=0, pady=5)
+
+###########################
 
 
 root.mainloop()
