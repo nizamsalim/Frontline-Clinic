@@ -30,6 +30,14 @@ tabs.hide(4)
 tabs.pack(expand=True,fill=BOTH)
 
 # ============================== HOME PAGE ======================================== #
+def changePage(screen):
+    print(screen)
+    screenList = ['existingUser','newUser','generateToken']
+    for i in range(len(screenList)):
+        if screenList[i] == screen:
+            # i=1
+            tabs.select(i+1)
+
 
 buttons_Frame = Frame(home_Screen)
 buttons_Frame.place(relx=0.5,rely=0.5,anchor=CENTER)
@@ -37,9 +45,9 @@ buttons_Frame.place(relx=0.5,rely=0.5,anchor=CENTER)
 welcome_Label = Label(buttons_Frame,text='Frontline Clinic \n Appointments System',font='algerian 30')
 welcome_Label.pack(pady=10)
 
-Button(buttons_Frame,text='Appointment for existing user',font='helvetica 15',width=25).pack(pady=10)
-Button(buttons_Frame,text='Appointment for new user',font='helvetica 15',width=25).pack(pady=10)
-Button(buttons_Frame,text='Generate token',font='helvetica 15',width=25).pack(pady=10)
+Button(buttons_Frame,text='Appointment for existing user',font='helvetica 15',width=25,command=lambda : changePage('existingUser')).pack(pady=10)
+Button(buttons_Frame,text='Appointment for new user',font='helvetica 15',width=25,command=lambda : changePage('newUser')).pack(pady=10)
+Button(buttons_Frame,text='Generate token',font='helvetica 15',width=25,command=lambda : changePage('generateToken')).pack(pady=10)
 
 # ============================== HOME PAGE ======================================== #
 
