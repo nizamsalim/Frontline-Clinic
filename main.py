@@ -1,7 +1,8 @@
 from tkinter import *
-from tkinter import ttk
-from tkinter import messagebox
+from tkinter import ttk,messagebox
 import functions as fns
+import mysql.connector as ms
+
 root = Tk()
 root.title('Appointment system')
 icon = PhotoImage(file="./logo1.png")
@@ -9,7 +10,7 @@ root.iconphoto(False, icon)
 root.geometry('1000x700')
 # root.maxsize(500,500)
 root.minsize(550, 350)
-a = 10
+
 tabs = ttk.Notebook(root)
 
 # screens
@@ -30,6 +31,16 @@ tabs.add(bookAppointment_Screen, text='Book Appointment')
 tabs.hide(4)
 
 tabs.pack(expand=True,fill=BOTH)
+
+# db config
+sqlConn = ms.connect(
+    host="localhost",
+    user='root',
+    passwd='nizam123',
+    database='frontline'
+)
+db = sqlConn.cursor() 
+
 
 # ============================== HOME PAGE ======================================== #
 def changePage(screen):
@@ -56,9 +67,14 @@ Button(buttons_Frame,text='Generate token',font='helvetica 15',width=25,command=
 def exUserSubmit():
     exUserId = exUserId_Var.get()
     if(exUserId):
-        pass
+        patientName = fns.getPatientName(db,exUserId)
+        if patientName != None:
+            pass
+        else:
+             messagebox.showinfo('User does not exist','User does not exist. Please create user')
     else:
         messagebox.showerror('Invalid entry','Please enter a valid patient ID')
+    exUserId_Entry.delete(0,END)
 
 exUser_Label = Label(existingUser_Screen,text='Exisiting User Appointment',font='comicsans 20 underline')
 exUser_Label.place(relx=0.5,rely=0.35,anchor=CENTER)
@@ -68,7 +84,7 @@ exUserForm_Frame.place(relx=0.5,rely=0.5,anchor=CENTER)
 
 exUserId_Var = StringVar()
 
-exUserId_Label = Label(exUserForm_Frame,text='Patient ID',font='comicsans 15')
+exUserId_Label = Label(exUserForm_Frame,text='Patient ID',font='lucida 15')
 exUserId_Entry = Entry(exUserForm_Frame,font='comicsans 14',textvariable=exUserId_Var)
 
 exUserId_Label.grid(row=0,column=0,padx=10,pady=10)
@@ -81,7 +97,6 @@ exUserSubmit_Button = Button(exUserSubmit_Frame,text='Submit',font='helvetica 13
 exUserSubmit_Button.pack()
 
 # ============================== EXISTING USER APPOINTMENT ======================================== #
-
 
 
 root.mainloop()
