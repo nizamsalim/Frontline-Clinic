@@ -28,7 +28,7 @@ tabs.add(generateToken_Screen, text='Generate token')
 
 # temporary tab
 tabs.add(bookAppointment_Screen, text='Book Appointment')
-tabs.hide(4)
+# tabs.hide(4)
 
 tabs.pack(expand=1, fill=BOTH)
 
@@ -114,7 +114,48 @@ exUserSubmit_Button.pack()
 
 # =================================== BOOK APPOINTMENT ======================================== #
 
+lst = [
+    'Dr. Manoj Mathew (Pediatrics)',
 
+    'Dr. Rahul Nair (Pediatrics)',
+
+    'Dr. Sanjeev Menon (Pediatrics)',
+
+    'Dr. Anakha Anil (Pediatrics)',
+
+    'Dr. Arun Sanil (Pediatrics)',
+
+    'Dr. Dheeraj (Pediatrics)',
+
+    'Dr. Nizam Salim (Pediatrics)',
+
+    'Dr. Mohan Kumar (Pediatrics)',
+
+    'Dr. Rayhan Mohammed (Pediatrics)',
+
+    'Dr. Anoop Menon (Pediatrics)',
+
+    'Dr. Prithviraj Sukumaran (Pediatrics)',
+
+    'Dr. Manju Warrier (Pediatrics)',
+
+    'Dr. Anna Ben (Pediatrics)',
+
+]
+
+bookApp_Label = Label(bookAppointment_Screen,
+                      text="Book an Appointment", font="comicsans 20 underline")
+bookApp_Label.pack()
+
+bookApp_Frame = Frame(bookAppointment_Screen)
+bookApp_Frame.place(relx=0.5, rely=0.5, anchor=CENTER)
+
+bookAppDoc_Var = StringVar()
+
+bookAppDoc_Label = Label(bookApp_Frame, text='Doctor', font='sans 14')
+bookAppDoc_Dropbox = ttk.Combobox(bookApp_Frame, font='sans 14', state='readonly', textvariable=bookAppDoc_Var,width=25)
+print(type(bookAppDoc_Dropbox))
+bookAppDoc_Dropbox['values'] = lst
 
 # =================================== BOOK APPOINTMENT ======================================== #
 
