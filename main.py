@@ -3,14 +3,20 @@ from tkinter import ttk, messagebox
 import functions as fns
 import mysql.connector as ms
 
+# main window
 root = Tk()
 root.title('Appointment system')
+
+# image object for icon
 icon = PhotoImage(file="./logo1.png")
 root.iconphoto(1, icon)
+
+# dimensions of window
 root.geometry('1000x700')
 # root.maxsize(500,500)
 root.minsize(550, 350)
 
+# tab navigation
 tabs = ttk.Notebook(root)
 
 # screens
@@ -18,16 +24,16 @@ home_Screen = Frame(root)
 existingUser_Screen = Frame(root)
 newUser_Screen = Frame(root)
 generateToken_Screen = Frame(root)
-
 bookAppointment_Screen = Frame(root)
 
+# adding screens to the tab navigation structure
 tabs.add(home_Screen, text='Home')
 tabs.add(existingUser_Screen, text='Existing User')
 tabs.add(newUser_Screen, text='New User')
 tabs.add(generateToken_Screen, text='Generate token')
-
-# temporary tab
 tabs.add(bookAppointment_Screen, text='Book Appointment')
+
+# hiding temporary tab
 # tabs.hide(4)
 
 tabs.pack(expand=1, fill=BOTH)
@@ -67,6 +73,7 @@ def exUserSubmit():
     exUserId = exUserId_Var.get()
     if(exUserId):
         try:
+            # exUserId is number
             exUserId = int(exUserId)
             patientName = fns.getPatientName(db, exUserId)
             if patientName != None:
@@ -77,10 +84,12 @@ def exUserSubmit():
                 messagebox.showinfo('User does not exist',
                                     'User does not exist. Please create user')
         except ValueError:
+            # exUserId contains other characters
             messagebox.showerror(
                 'Invalid entry', 'Please enter a valid patient ID')
 
     else:
+        # user submitted with empty entry widget
         messagebox.showerror(
             'Invalid entry', 'Please enter a valid patient ID')
     exUserId_Entry.delete(0, END)
@@ -93,6 +102,7 @@ exUser_Label.place(relx=0.5, rely=0.35, anchor=CENTER)
 exUserForm_Frame = Frame(existingUser_Screen, borderwidth=5, relief=GROOVE)
 exUserForm_Frame.place(relx=0.5, rely=0.5, anchor=CENTER)
 
+# Tkinter variable to get user input from entry widget
 exUserId_Var = StringVar()
 
 exUserId_Label = Label(exUserForm_Frame, text='Patient ID', font='lucida 15')
@@ -114,6 +124,7 @@ exUserSubmit_Button.pack()
 
 # =================================== BOOK APPOINTMENT ======================================== #
 
+# dummy list of doctors, to be taken from db
 lst = [
     'Dr. Manoj Mathew (Pediatrics)',
 
@@ -150,13 +161,17 @@ bookApp_Label.pack()
 bookApp_Frame = Frame(bookAppointment_Screen)
 bookApp_Frame.place(relx=0.5, rely=0.5, anchor=CENTER)
 
+# Tkinter variable to get user input from entry widget
 bookAppDoc_Var = StringVar()
 
 bookAppDoc_Label = Label(bookApp_Frame, text='Doctor', font='sans 14')
-bookAppDoc_Dropbox = ttk.Combobox(bookApp_Frame, font='sans 14', state='readonly', textvariable=bookAppDoc_Var,width=25)
-print(type(bookAppDoc_Dropbox))
+bookAppDoc_Dropbox = ttk.Combobox(
+    bookApp_Frame, font='sans 14', state='readonly', textvariable=bookAppDoc_Var, width=25)
+
+# adds values of the list to dropbox
 bookAppDoc_Dropbox['values'] = lst
 
+bookAppDoc_Dropbox.pack()
 # =================================== BOOK APPOINTMENT ======================================== #
 
 
