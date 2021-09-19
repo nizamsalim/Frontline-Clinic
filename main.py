@@ -2,6 +2,7 @@ from tkinter import *
 from tkinter import ttk, messagebox
 import functions as fns
 import mysql.connector as ms
+import tkcalendar as tkcal
 
 # main window
 root = Tk()
@@ -19,6 +20,19 @@ root.minsize(550, 350)
 # tab navigation
 tabs = ttk.Notebook(root)
 
+
+def handleTabChange(e):
+    if tabs.index(CURRENT) != 4:
+        tabs.hide(4)
+        bookAppPatientId_Entry.delete(0, END)
+        bookAppPatientName_Entry.delete(0, END)
+        time_Var.set('9 a.m - 12 p.m')
+        calendar.selection_clear()
+        bookAppDoc_Var.set('')
+
+
+tabs.bind('<<NotebookTabChanged>>',handleTabChange)
+
 # screens
 home_Screen = Frame(root)
 existingUser_Screen = Frame(root)
@@ -34,7 +48,7 @@ tabs.add(generateToken_Screen, text='Generate token')
 tabs.add(bookAppointment_Screen, text='Book Appointment')
 
 # hiding temporary tab
-# tabs.hide(4)
+tabs.hide(4)
 
 tabs.pack(expand=1, fill=BOTH)
 
@@ -78,8 +92,9 @@ def exUserSubmit():
             patientName = fns.getPatientName(db, exUserId)
             if patientName != None:
                 tabs.select(4)
-                win = Toplevel(root)
-                win.geometry('500x500')
+                bookAppPatientId_Entry.insert(0, exUserId)
+                bookAppPatientName_Entry.insert(0, patientName)
+
             else:
                 messagebox.showinfo('User does not exist',
                                     'User does not exist. Please create user')
@@ -154,24 +169,97 @@ lst = [
 
 ]
 
+
+def handleAppointmentSubmit():
+    doc_name = bookAppDoc_Var.get()
+    p_id = bookAppId_Var.get()
+    p_name = bookAppName_Var.get()
+    time = time_Var.get()
+    date = calendar.get_date()
+    [mm, dd, yy] = date.split('/')
+    date = f"{dd}/{mm}/{yy}"
+    if doc_name and p_id and p_name and time and date:
+        fns.createNewAppointment(db, sqlConn, doc_name, p_id, time, date)
+        messagebox.showinfo('Appointment booked',
+                            f'Appointment for {p_name} with id number {p_id} booked with {doc_name} on {date} during {time} ')
+    else:
+        messagebox.showerror(
+            'Invalid entry', 'Please enter valid details')
+    bookAppPatientId_Entry.delete(0, END)
+    bookAppPatientName_Entry.delete(0, END)
+    time_Var.set('9 a.m - 12 p.m')
+    calendar.selection_clear()
+    bookAppDoc_Var.set('')
+
+
 bookApp_Label = Label(bookAppointment_Screen,
                       text="Book an Appointment", font="comicsans 20 underline")
 bookApp_Label.pack()
 
-bookApp_Frame = Frame(bookAppointment_Screen)
+bookApp_Frame = Frame(bookAppointment_Screen, borderwidth=5, relief=GROOVE)
 bookApp_Frame.place(relx=0.5, rely=0.5, anchor=CENTER)
 
 # Tkinter variable to get user input from entry widget
 bookAppDoc_Var = StringVar()
+bookAppId_Var = StringVar()
+bookAppName_Var = StringVar()
+
 
 bookAppDoc_Label = Label(bookApp_Frame, text='Doctor', font='sans 14')
 bookAppDoc_Dropbox = ttk.Combobox(
     bookApp_Frame, font='sans 14', state='readonly', textvariable=bookAppDoc_Var, width=25)
 
+bookAppPatientId_Label = Label(
+    bookApp_Frame, text='Patient ID', font='sans 14')
+bookAppPatientId_Entry = Entry(
+    bookApp_Frame, font='sans 14', width=27, textvariable=bookAppId_Var)
+
+bookAppPatientName_Label = Label(
+    bookApp_Frame, text='Patient Name', font='sans 14')
+bookAppPatientName_Entry = Entry(
+    bookApp_Frame, font='sans 14', width=27, textvariable=bookAppName_Var)
+
+time_Var = StringVar(bookApp_Frame, '9 a.m - 12 p.m')
+
+Label(bookApp_Frame, text="Time Slot", font='sans 14').grid(row=3, column=0)
+
+Radiobutton(bookApp_Frame, text='9 a.m - 12 p.m', value='9 a.m - 12 p.m',
+            variable=time_Var, font='sans 13').grid(row=4, column=0)
+Radiobutton(bookApp_Frame, text='1 p.m. - 3 p.m.', value='1 p.m. - 3 p.m.',
+            variable=time_Var, font='sans 13').grid(row=4, column=1)
+Radiobutton(bookApp_Frame, text='4 p.m. - 6 p.m.', value='4 p.m. - 6 p.m.',
+            variable=time_Var, font='sans 13').grid(row=5, column=0)
+Radiobutton(bookApp_Frame, text='7 p.m. - 9 p.m.', value='7 p.m. - 9 p.m.',
+            variable=time_Var, font='sans 13').grid(row=5, column=1)
+
+
+bookAppDate_Label = Label(bookApp_Frame, text="Date", font='sans 14')
+calendar = tkcal.Calendar(bookApp_Frame, selectmode="day")
+
+
+bookAppDoc_Label.grid(row=0, column=0, pady=10)
+bookAppDoc_Dropbox.grid(row=0, column=1, pady=10)
+
+bookAppPatientId_Label.grid(row=1, column=0, pady=5)
+bookAppPatientId_Entry.grid(row=1, column=1, padx=5, pady=5)
+
+bookAppPatientName_Label.grid(row=2, column=0, pady=5)
+bookAppPatientName_Entry.grid(row=2, column=1, padx=5, pady=5)
+
+bookAppDate_Label.grid(row=6, column=0)
+calendar.grid(row=6, column=1, pady=5)
+
+bookAppSubmit_Frame = Frame(bookApp_Frame)
+bookAppSubmit_Frame.grid(row=7, columnspan=2)
+
+bookAppSubmit_Button = Button(bookAppSubmit_Frame, text='Book Appointment',
+                              font='sans 13', command=handleAppointmentSubmit)
+bookAppSubmit_Button.pack(pady=10)
+
+
 # adds values of the list to dropbox
 bookAppDoc_Dropbox['values'] = lst
 
-bookAppDoc_Dropbox.pack()
 # =================================== BOOK APPOINTMENT ======================================== #
 
 
