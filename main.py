@@ -3,6 +3,7 @@ from tkinter import ttk, messagebox
 import functions as fns
 import mysql.connector as ms
 import tkcalendar as tkcal
+import datetime
 
 # main window
 root = Tk()
@@ -31,7 +32,12 @@ def handleTabChange(e):
         bookAppDoc_Var.set('')
 
 
-tabs.bind('<<NotebookTabChanged>>',handleTabChange)
+def temp(e):
+    tabs.select(4)
+
+
+tabs.bind('<<NotebookTabChanged>>', handleTabChange)
+root.bind('<Control-a>', temp)
 
 # screens
 home_Screen = Frame(root)
@@ -170,26 +176,53 @@ lst = [
 ]
 
 
+def isAppointmentBeforeToday(app_date):
+    today = datetime.datetime.now()
+    if app_date <= today:
+        return True
+    return False
+
+
+def formatDate(rawDate):
+    # rawDate = mm/dd/yy
+    [mm, dd, yy] = rawDate.split('/')
+    mm, dd, yyyy = int(mm), int(dd), int(yy)+2000
+    dateObj = datetime.datetime(yyyy, mm, dd)
+    dateString = dateObj.strftime('%d/%m/%y')
+    return dateObj, dateString
+
+
 def handleAppointmentSubmit():
     doc_name = bookAppDoc_Var.get()
     p_id = bookAppId_Var.get()
     p_name = bookAppName_Var.get()
     time = time_Var.get()
-    date = calendar.get_date()
-    [mm, dd, yy] = date.split('/')
-    date = f"{dd}/{mm}/{yy}"
-    if doc_name and p_id and p_name and time and date:
-        fns.createNewAppointment(db, sqlConn, doc_name, p_id, time, date)
-        messagebox.showinfo('Appointment booked',
-                            f'Appointment for {p_name} with id number {p_id} booked with {doc_name} on {date} during {time} ')
+    rawDate = calendar.get_date()
+
+    k = 0
+
+    if doc_name and p_id and p_name and time and rawDate:
+
+        (appDateObject, date) = formatDate(rawDate)
+
+        if(isAppointmentBeforeToday(appDateObject)):
+            messagebox.showerror(
+                'Invalid date', f'Date should not be on or before {datetime.datetime.now().strftime("%d %B %Y")}')
+            k = 1
+        else:
+            fns.createNewAppointment(db, sqlConn, doc_name, p_id, time, date)
+            messagebox.showinfo('Appointment booked',
+                                f'Appointment for {p_name} with id number {p_id} booked with {doc_name} on {date} during {time} ')
+            tabs.select(0)
     else:
         messagebox.showerror(
             'Invalid entry', 'Please enter valid details')
-    bookAppPatientId_Entry.delete(0, END)
-    bookAppPatientName_Entry.delete(0, END)
-    time_Var.set('9 a.m - 12 p.m')
+    if k == 0:
+        bookAppPatientId_Entry.delete(0, END)
+        bookAppPatientName_Entry.delete(0, END)
+        time_Var.set('9 a.m - 12 p.m')
+        bookAppDoc_Var.set('')
     calendar.selection_clear()
-    bookAppDoc_Var.set('')
 
 
 bookApp_Label = Label(bookAppointment_Screen,
@@ -261,6 +294,12 @@ bookAppSubmit_Button.pack(pady=10)
 bookAppDoc_Dropbox['values'] = lst
 
 # =================================== BOOK APPOINTMENT ======================================== #
+
+
+# =================================== NEW USER ======================================== #
+
+
+# =================================== NEW USER ======================================== #
 
 
 root.mainloop()
