@@ -21,3 +21,10 @@ def createNewAppointment(db, conn, d_name, p_id, time, date, status='pending'):
     db.execute(
         f"INSERT INTO appointments(patient_id,doctor_name,booking_date,appointment_date,time,status) VALUES({p_id},'{d_name}','{bookingDate}','{date}','{time}','{status}')")
     conn.commit()
+
+def getLastUserId(db):
+    db.execute("SELECT id FROM patients")
+    patients = db.fetchall()
+    patients.reverse()
+    pid=patients[0][0]
+    return pid

@@ -30,6 +30,10 @@ def handleTabChange(e):
         time_Var.set('9 a.m - 12 p.m')
         calendar.selection_clear()
         bookAppDoc_Var.set('')
+        newUserName_Entry.delete(0, END)
+        newUserPlace_Entry.delete(0, END)
+        newUserAge_Entry.delete(0, END)
+        newUsePhone_Entry.delete(0, END)
 
 
 def temp(e):
@@ -298,6 +302,74 @@ bookAppDoc_Dropbox['values'] = lst
 
 # =================================== NEW USER ======================================== #
 
+
+def handleNewUserSubmit():
+    name = nameVar.get()
+    place = placeVar.get()
+    age = ageVar.get()
+    phone = phoneVar.get()
+
+    if name and place and age and phone:
+        fns.createNewUser(db, sqlConn, name, age, phone, place)
+        pid = fns.getLastUserId(db)
+        messagebox.showinfo(
+            'User created', f'User created successfully with id {pid}')
+        bookAppPatientId_Entry.insert(0, pid)
+        bookAppPatientName_Entry.insert(0, name)
+        tabs.select(4)
+
+    else:
+        messagebox.showerror(
+            'Invalid entry', 'Please enter valid details')
+    newUserName_Entry.delete(0, END)
+    newUserPlace_Entry.delete(0, END)
+    newUserAge_Entry.delete(0, END)
+    newUsePhone_Entry.delete(0, END)
+
+
+newUser_Label = Label(newUser_Screen, text="New User",
+                      font="comicsans 20 underline")
+newUser_Label.place(relx=0.5, rely=0.25, anchor=CENTER)
+
+newUserForm_Frame = Frame(newUser_Screen, borderwidth=5, relief=GROOVE)
+newUserForm_Frame.place(relx=0.5, rely=0.5, anchor=CENTER)
+
+newUserName_Label = Label(newUserForm_Frame, text="Name", font="sans 14")
+newUserPlace_Label = Label(newUserForm_Frame, text="Place", font="sans 14")
+newUserAge_Label = Label(newUserForm_Frame, text="Age", font="sans 14")
+newUserPhone_Label = Label(newUserForm_Frame, text="Phone", font="sans 14")
+
+nameVar = StringVar()
+placeVar = StringVar()
+ageVar = StringVar()
+phoneVar = StringVar()
+
+
+newUserName_Entry = Entry(
+    newUserForm_Frame, font='sans 14', borderwidth=2, relief=SUNKEN, textvariable=nameVar)
+newUserPlace_Entry = Entry(
+    newUserForm_Frame, font='sans 14', borderwidth=2, relief=SUNKEN, textvariable=placeVar)
+newUserAge_Entry = Entry(
+    newUserForm_Frame, font='sans 14', borderwidth=2, relief=SUNKEN, textvariable=ageVar)
+newUsePhone_Entry = Entry(
+    newUserForm_Frame, font='sans 14', borderwidth=2, relief=SUNKEN, textvariable=phoneVar)
+
+newUserName_Label.grid(row=0, column=0, padx=10, pady=10)
+newUserPlace_Label.grid(row=1, column=0, padx=10, pady=10)
+newUserAge_Label.grid(row=2, column=0, padx=10, pady=10)
+newUserPhone_Label.grid(row=3, column=0, padx=10, pady=10)
+
+newUserName_Entry.grid(row=0, column=1, padx=10, pady=10)
+newUserPlace_Entry.grid(row=1, column=1, padx=10, pady=10)
+newUserAge_Entry.grid(row=2, column=1, padx=10, pady=10)
+newUsePhone_Entry.grid(row=3, column=1, padx=10, pady=10)
+
+newUserSubmit_Frame = Frame(newUserForm_Frame)
+newUserSubmit_Frame.grid(row=4, columnspan=2)
+
+newUserSubmit_Button = Button(
+    newUserSubmit_Frame, text="Submit", font="sans 14", command=handleNewUserSubmit)
+newUserSubmit_Button.pack(pady=5)
 
 # =================================== NEW USER ======================================== #
 
