@@ -372,6 +372,59 @@ newUserSubmit_Button = Button(
 newUserSubmit_Button.pack(pady=5)
 
 # =================================== NEW USER ======================================== #
+# =================================== GENERATE TOKEN ======================================== #
+
+tokenCount = 1
 
 
+def main():
+    global tokenCount
+    [dd, mm] = datetime.datetime.now().strftime('%d/%m').split('/')
+    token = f"{dd}{mm}-{tokenCount}"
+    tokenCount += 1
+    messagebox.showinfo('Token number', f'Token number is {token}')
+
+
+genToken_Button = Button(generateToken_Screen,
+                         text='Generate Token', command=main, font='sans 14')
+genToken_Button.pack()
+
+# =================================== GENERATE TOKEN ======================================== #
+
+
+def checkConfirmExit(inpPin, cbox):
+    pin = '1234'
+    if pin == inpPin:
+        root.destroy()
+    else:
+        messagebox.showerror('Incorrect pin', 'Please enter correct pin')
+        cbox.destroy()
+
+
+def handleAppExit(mode):
+    if mode != 'dev':
+        confirmBox = Toplevel(root)
+        confirmBox.title('Quit Application')
+
+        Label(confirmBox, text='Please enter confirmation pin to exit application',
+              font='sans 11').pack(padx=20)
+
+        confirmPin_Var = StringVar()
+        confirmExitPin_Entry = Entry(
+            confirmBox, font='sans 13', textvariable=confirmPin_Var)
+        confirmExitPin_Entry.pack()
+        confirmExitPin_Entry.focus()
+
+        cbuttons_Frame = Frame(confirmBox)
+        cbuttons_Frame.pack()
+        Button(cbuttons_Frame, font='sans 11', text="Ok", command=lambda: checkConfirmExit(confirmPin_Var.get(), confirmBox),
+               width=8).grid(row=0, column=0, padx=10, pady=10)
+        Button(cbuttons_Frame, font='sans 11', text="Cancel", command=confirmBox.destroy,
+               width=8).grid(row=0, column=1, padx=10, pady=10)
+
+    else:
+        root.destroy()
+
+
+root.protocol("WM_DELETE_WINDOW", lambda: handleAppExit(''))
 root.mainloop()
