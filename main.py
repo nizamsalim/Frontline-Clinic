@@ -5,8 +5,10 @@ import mysql.connector as ms
 import tkcalendar as tkcal
 import datetime
 
+
 # main window
 root = Tk()
+
 root.title('Appointment system')
 
 # image object for icon
@@ -18,6 +20,12 @@ root.geometry('1000x700')
 # root.maxsize(500,500)
 root.minsize(550, 350)
 
+# db config
+isConnected = fns.initDatabase()
+if isConnected == False:
+    messagebox.showerror("Error", "Database connection error")
+    root.destroy()
+
 # tab navigation
 tabs = ttk.Notebook(root)
 
@@ -27,21 +35,19 @@ def handleTabChange(e):
         tabs.hide(4)
         bookAppPatientId_Entry.delete(0, END)
         bookAppPatientName_Entry.delete(0, END)
+        bookAppDoc_Var.set('')
         time_Var.set('9 a.m - 12 p.m')
         calendar.selection_clear()
-        bookAppDoc_Var.set('')
-        newUserName_Entry.delete(0, END)
-        newUserPlace_Entry.delete(0, END)
-        newUserAge_Entry.delete(0, END)
-        newUsePhone_Entry.delete(0, END)
-
-
-def temp(e):
-    tabs.select(4)
+    # clear all entries
+    exUserId_Entry.delete(0, END)
+    newUserName_Entry.delete(0, END)
+    newUserPlace_Entry.delete(0, END)
+    newUserAge_Entry.delete(0, END)
+    newUserPhone_Entry.delete(0, END)
+    genTokenRefNum_Entry.delete(0, END)
 
 
 tabs.bind('<<NotebookTabChanged>>', handleTabChange)
-root.bind('<Control-a>', temp)
 
 # screens
 home_Screen = Frame(root)
@@ -62,17 +68,9 @@ tabs.hide(4)
 
 tabs.pack(expand=1, fill=BOTH)
 
-# db config
-sqlConn = ms.connect(
-    host="localhost",
-    user='root',
-    passwd='nizam123',
-    database='frontline'
-)
-db = sqlConn.cursor()
-
 
 # ============================== HOME PAGE ======================================== #
+
 
 buttons_Frame = Frame(home_Screen)
 buttons_Frame.place(relx=0.5, rely=0.5, anchor=CENTER)
@@ -88,6 +86,7 @@ Button(buttons_Frame, text='Appointment for new user', font='helvetica 15',
 Button(buttons_Frame, text='Generate token', font='helvetica 15',
        width=25, command=lambda: tabs.select(3)).pack(pady=10)
 
+
 # ============================== HOME PAGE ======================================== #
 
 # ============================== EXISTING USER APPOINTMENT ======================================== #
@@ -99,7 +98,7 @@ def exUserSubmit():
         try:
             # exUserId is number
             exUserId = int(exUserId)
-            patientName = fns.getPatientName(db, exUserId)
+            patientName = fns.getPatientName(exUserId)
             if patientName != None:
                 tabs.select(4)
                 bookAppPatientId_Entry.insert(0, exUserId)
@@ -182,9 +181,7 @@ lst = [
 
 def isAppointmentBeforeToday(app_date):
     today = datetime.datetime.now()
-    if app_date <= today:
-        return True
-    return False
+    return True if app_date <= today else False
 
 
 def formatDate(rawDate):
@@ -214,9 +211,10 @@ def handleAppointmentSubmit():
                 'Invalid date', f'Date should not be on or before {datetime.datetime.now().strftime("%d %B %Y")}')
             k = 1
         else:
-            fns.createNewAppointment(db, sqlConn, doc_name, p_id, time, date)
+            app_id = fns.createNewAppointment(
+                doc_name, p_id, time, date)
             messagebox.showinfo('Appointment booked',
-                                f'Appointment for {p_name} with id number {p_id} booked with {doc_name} on {date} during {time} ')
+                                f'Appointment for {p_name} booked with {doc_name} on {date} during {time}. Please note reference number {app_id}')
             tabs.select(0)
     else:
         messagebox.showerror(
@@ -310,12 +308,12 @@ def handleNewUserSubmit():
     phone = phoneVar.get()
 
     if name and place and age and phone:
-        fns.createNewUser(db, sqlConn, name, age, phone, place)
-        pid = fns.getLastUserId(db)
+        pid = fns.createNewUser(name, age, phone, place)
         messagebox.showinfo(
             'User created', f'User created successfully with id {pid}')
-        bookAppPatientId_Entry.insert(0, pid)
+        bookAppPatientId_Entry.insert(0, str(pid))
         bookAppPatientName_Entry.insert(0, name)
+
         tabs.select(4)
 
     else:
@@ -324,7 +322,7 @@ def handleNewUserSubmit():
     newUserName_Entry.delete(0, END)
     newUserPlace_Entry.delete(0, END)
     newUserAge_Entry.delete(0, END)
-    newUsePhone_Entry.delete(0, END)
+    newUserPhone_Entry.delete(0, END)
 
 
 newUser_Label = Label(newUser_Screen, text="New User",
@@ -351,7 +349,7 @@ newUserPlace_Entry = Entry(
     newUserForm_Frame, font='sans 14', borderwidth=2, relief=SUNKEN, textvariable=placeVar)
 newUserAge_Entry = Entry(
     newUserForm_Frame, font='sans 14', borderwidth=2, relief=SUNKEN, textvariable=ageVar)
-newUsePhone_Entry = Entry(
+newUserPhone_Entry = Entry(
     newUserForm_Frame, font='sans 14', borderwidth=2, relief=SUNKEN, textvariable=phoneVar)
 
 newUserName_Label.grid(row=0, column=0, padx=10, pady=10)
@@ -362,7 +360,7 @@ newUserPhone_Label.grid(row=3, column=0, padx=10, pady=10)
 newUserName_Entry.grid(row=0, column=1, padx=10, pady=10)
 newUserPlace_Entry.grid(row=1, column=1, padx=10, pady=10)
 newUserAge_Entry.grid(row=2, column=1, padx=10, pady=10)
-newUsePhone_Entry.grid(row=3, column=1, padx=10, pady=10)
+newUserPhone_Entry.grid(row=3, column=1, padx=10, pady=10)
 
 newUserSubmit_Frame = Frame(newUserForm_Frame)
 newUserSubmit_Frame.grid(row=4, columnspan=2)
@@ -371,60 +369,66 @@ newUserSubmit_Button = Button(
     newUserSubmit_Frame, text="Submit", font="sans 14", command=handleNewUserSubmit)
 newUserSubmit_Button.pack(pady=5)
 
-# =================================== NEW USER ======================================== #
+# ====================================== NEW USER =========================================== #
 # =================================== GENERATE TOKEN ======================================== #
 
-tokenCount = 1
+tokenCount = fns.getInitialTokenNumber()
 
 
-def main():
+def getTokenNumber():
     global tokenCount
     [dd, mm] = datetime.datetime.now().strftime('%d/%m').split('/')
     token = f"{dd}{mm}-{tokenCount}"
     tokenCount += 1
     messagebox.showinfo('Token number', f'Token number is {token}')
+    return token
 
 
-genToken_Button = Button(generateToken_Screen,
-                         text='Generate Token', command=main, font='sans 14')
-genToken_Button.pack()
+def genTokenSubmit():
+    appId = genTokenRefNum_Var.get()
+    p_id = fns.getPatientIdByAppId(appId)
+    if p_id == None:
+        messagebox.showinfo('Not found',
+                            'Appointment reference number does not exist.')
+    else:
+        isAppointmentPending = fns.isAppointmentPending(appId)
+        if isAppointmentPending == False:
+            messagebox.showinfo('Not found',
+                                'Appointment is already completed')
+        else:
+            tkn = getTokenNumber()
+            fns.saveToken(tkn)
+            fns.updateNumberOfVisits(p_id)
+            fns.updateAppointmentStatus(p_id, 'completed')
+            genTokenRefNum_Entry.delete(0, END)
+            tabs.select(0)
+
+
+genToken_Label = Label(generateToken_Screen,
+                       text='Generate Token', font='comicsans 20 underline')
+genToken_Label.place(relx=0.5, rely=0.35, anchor=CENTER)
+
+genTokenForm_Frame = Frame(generateToken_Screen, borderwidth=5, relief=GROOVE)
+genTokenForm_Frame.place(relx=0.5, rely=0.5, anchor=CENTER)
+
+# Tkinter variable to get user input from entry widget
+genTokenRefNum_Var = StringVar()
+
+genTokenRefNum_Label = Label(
+    genTokenForm_Frame, text='Reference number', font='lucida 15')
+genTokenRefNum_Entry = Entry(
+    genTokenForm_Frame, font='comicsans 14', textvariable=genTokenRefNum_Var)
+
+genTokenRefNum_Label.grid(row=0, column=0, padx=10, pady=10)
+genTokenRefNum_Entry.grid(row=0, column=1, padx=10, pady=10)
+
+genTokenSubmit_Frame = Frame(genTokenForm_Frame)
+genTokenSubmit_Frame.grid(row=1, columnspan=2)
+
+genTokenSubmit_Button = Button(
+    genTokenSubmit_Frame, text='Submit', font='helvetica 13', command=genTokenSubmit)
+genTokenSubmit_Button.pack(pady=10)
 
 # =================================== GENERATE TOKEN ======================================== #
 
-
-def checkConfirmExit(inpPin, cbox):
-    pin = '1234'
-    if pin == inpPin:
-        root.destroy()
-    else:
-        messagebox.showerror('Incorrect pin', 'Please enter correct pin')
-        cbox.destroy()
-
-
-def handleAppExit(mode):
-    if mode != 'dev':
-        confirmBox = Toplevel(root)
-        confirmBox.title('Quit Application')
-
-        Label(confirmBox, text='Please enter confirmation pin to exit application',
-              font='sans 11').pack(padx=20)
-
-        confirmPin_Var = StringVar()
-        confirmExitPin_Entry = Entry(
-            confirmBox, font='sans 13', textvariable=confirmPin_Var)
-        confirmExitPin_Entry.pack()
-        confirmExitPin_Entry.focus()
-
-        cbuttons_Frame = Frame(confirmBox)
-        cbuttons_Frame.pack()
-        Button(cbuttons_Frame, font='sans 11', text="Ok", command=lambda: checkConfirmExit(confirmPin_Var.get(), confirmBox),
-               width=8).grid(row=0, column=0, padx=10, pady=10)
-        Button(cbuttons_Frame, font='sans 11', text="Cancel", command=confirmBox.destroy,
-               width=8).grid(row=0, column=1, padx=10, pady=10)
-
-    else:
-        root.destroy()
-
-
-root.protocol("WM_DELETE_WINDOW", lambda: handleAppExit(''))
 root.mainloop()
