@@ -58,11 +58,11 @@ def initDatabase():
 
 def getPatientName(patientId):
     db.execute(f'SELECT * from patients WHERE id={patientId}')
-    data = db.fetchall()
-    if len(data) == 0:
+    data = db.fetchone()
+    if data == None:
         return
     else:
-        return data[0][1]
+        return data[1]
 
 
 def createNewUser(name, age, phone, place, visits=0):
@@ -80,7 +80,7 @@ def createNewAppointment(d_name, p_id, time, date, status='pending'):
         f"INSERT INTO appointments(patient_id,doctor_name,booking_date,appointment_date,time,status) VALUES({p_id},'{d_name}','{bookingDate}','{date}','{time}','{status}')")
     conn.commit()
     db.execute(
-        f"SELECT app_id FROM appointments WHERE patient_id={p_id} ORDER BY app_id desc LIMIT 1")
+        f"SELECT app_id FROM appointments ORDER BY app_id desc LIMIT 1")
     id = db.fetchone()
     return id[0]
 
@@ -141,8 +141,19 @@ def getPatientIdByAppId(appId):
         return
     return data[0]
 
+
 def isAppointmentPending(appId):
     db.execute(f"SELECT status from appointments WHERE app_id={appId}")
     data = db.fetchone()
     return True if data[0] == 'pending' else False
 
+
+def getPastAppointments(p_id):
+    db.execute(
+        f"SELECT app_id, doctor_name, booking_date, appointment_date, status FROM appointments WHERE patient_id={p_id}")
+    return db.fetchall()
+
+
+def closeDatabase():
+    db.close()
+    conn.close()

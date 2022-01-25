@@ -69,7 +69,7 @@ tabs.hide(4)
 tabs.pack(expand=1, fill=BOTH)
 
 
-# ============================== HOME PAGE ======================================== #
+# ====================================== HOME PAGE ================================================ #
 
 
 buttons_Frame = Frame(home_Screen)
@@ -87,7 +87,25 @@ Button(buttons_Frame, text='Generate token', font='helvetica 15',
        width=25, command=lambda: tabs.select(3)).pack(pady=10)
 
 
-# ============================== HOME PAGE ======================================== #
+# ====================================== HOME PAGE ================================================ #
+
+
+# ====================================== PAST APPOINTMENTS ================================================ #
+
+def showPastAppointmentsWindow(p_id, nm):
+    win = Toplevel(root)
+    win.focus_force()
+    win.title(f'Appointment history for {nm}')
+    appointments = fns.getPastAppointments(p_id)
+    appointments.insert(0, ('Reference id', 'Doctor',
+                        'Booking date', 'Appointment date', 'Status'))
+    for i in range(len(appointments)):
+        for j in range(len(appointments[i])):
+            Label(win, text=appointments[i][j], width=30, font='comicsans 10', relief=SUNKEN).grid(
+                row=i, column=j)
+    win.bind('<FocusOut>', lambda e:  win.destroy())
+
+# ====================================== PAST APPOINTMENTS ================================================ #
 
 # ============================== EXISTING USER APPOINTMENT ======================================== #
 
@@ -100,6 +118,7 @@ def exUserSubmit():
             exUserId = int(exUserId)
             patientName = fns.getPatientName(exUserId)
             if patientName != None:
+                showPastAppointmentsWindow(exUserId, patientName)
                 tabs.select(4)
                 bookAppPatientId_Entry.insert(0, exUserId)
                 bookAppPatientName_Entry.insert(0, patientName)
@@ -217,6 +236,7 @@ def handleAppointmentSubmit():
                                 f'Appointment for {p_name} booked with {doc_name} on {date} during {time}. Please note reference number {app_id}')
             tabs.select(0)
     else:
+        k = 1
         messagebox.showerror(
             'Invalid entry', 'Please enter valid details')
     if k == 0:
@@ -386,22 +406,31 @@ def getTokenNumber():
 
 def genTokenSubmit():
     appId = genTokenRefNum_Var.get()
-    p_id = fns.getPatientIdByAppId(appId)
-    if p_id == None:
-        messagebox.showinfo('Not found',
-                            'Appointment reference number does not exist.')
+    if(appId):
+        try:
+            appId = int(appId)
+            p_id = fns.getPatientIdByAppId(appId)
+            if p_id == None:
+                messagebox.showinfo('Not found',
+                                    'Appointment reference number does not exist.')
+            else:
+                isAppointmentPending = fns.isAppointmentPending(appId)
+                if isAppointmentPending == False:
+                    messagebox.showinfo('Not found',
+                                        'Appointment is already completed')
+                else:
+                    tkn = getTokenNumber()
+                    fns.saveToken(tkn)
+                    fns.updateNumberOfVisits(p_id)
+                    fns.updateAppointmentStatus(p_id, 'completed')
+                    genTokenRefNum_Entry.delete(0, END)
+                    tabs.select(0)
+        except ValueError:
+            messagebox.showerror(
+                'Invalid entry', 'Please enter a valid reference number')
     else:
-        isAppointmentPending = fns.isAppointmentPending(appId)
-        if isAppointmentPending == False:
-            messagebox.showinfo('Not found',
-                                'Appointment is already completed')
-        else:
-            tkn = getTokenNumber()
-            fns.saveToken(tkn)
-            fns.updateNumberOfVisits(p_id)
-            fns.updateAppointmentStatus(p_id, 'completed')
-            genTokenRefNum_Entry.delete(0, END)
-            tabs.select(0)
+        messagebox.showerror(
+            'Invalid entry', 'Please enter a valid reference number')
 
 
 genToken_Label = Label(generateToken_Screen,
@@ -432,3 +461,4 @@ genTokenSubmit_Button.pack(pady=10)
 # =================================== GENERATE TOKEN ======================================== #
 
 root.mainloop()
+fns.closeDatabase()
