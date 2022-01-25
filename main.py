@@ -16,9 +16,10 @@ icon = PhotoImage(file="./logo1.png")
 root.iconphoto(1, icon)
 
 # dimensions of window
-root.geometry('1000x700')
+root.geometry('1200x800')
 # root.maxsize(500,500)
 root.minsize(550, 350)
+
 
 # db config
 isConnected = fns.initDatabase()
@@ -234,6 +235,9 @@ def handleAppointmentSubmit():
                 doc_name, p_id, time, date)
             messagebox.showinfo('Appointment booked',
                                 f'Appointment for {p_name} booked with {doc_name} on {date} during {time}. Please note reference number {app_id}')
+            fns.sendWhatsappConfirmation(
+                p_name, doc_name, date, time, app_id, p_id)
+            root.focus_force()
             tabs.select(0)
     else:
         k = 1
@@ -459,6 +463,7 @@ genTokenSubmit_Button = Button(
 genTokenSubmit_Button.pack(pady=10)
 
 # =================================== GENERATE TOKEN ======================================== #
+
 
 root.mainloop()
 fns.closeDatabase()
