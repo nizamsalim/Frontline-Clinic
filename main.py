@@ -1,5 +1,7 @@
 from tkinter import *
 from tkinter import ttk, messagebox
+
+from matplotlib.pyplot import fill
 import functions as fns
 import mysql.connector as ms
 import tkcalendar as tkcal
@@ -56,6 +58,8 @@ existingUser_Screen = Frame(root)
 newUser_Screen = Frame(root)
 generateToken_Screen = Frame(root)
 bookAppointment_Screen = Frame(root)
+manageDoctors_Screen = Frame(root)
+managePatients_Screen = Frame(root)
 
 # adding screens to the tab navigation structure
 tabs.add(home_Screen, text='Home')
@@ -63,6 +67,8 @@ tabs.add(existingUser_Screen, text='Existing User')
 tabs.add(newUser_Screen, text='New User')
 tabs.add(generateToken_Screen, text='Generate token')
 tabs.add(bookAppointment_Screen, text='Book Appointment')
+tabs.add(manageDoctors_Screen, text='Manage doctors')
+tabs.add(managePatients_Screen, text='Manage patients')
 
 # hiding temporary tab
 tabs.hide(4)
@@ -86,6 +92,10 @@ Button(buttons_Frame, text='Appointment for new user', font='helvetica 15',
        width=25, command=lambda: tabs.select(2)).pack(pady=10)
 Button(buttons_Frame, text='Generate token', font='helvetica 15',
        width=25, command=lambda: tabs.select(3)).pack(pady=10)
+Button(buttons_Frame, text='Manage doctors', font='helvetica 15',
+       width=25, command=lambda: tabs.select(5)).pack(pady=30)
+Button(buttons_Frame, text='Manage patients', font='helvetica 15',
+       width=25, command=lambda: tabs.select(6)).pack()
 
 
 # ====================================== HOME PAGE ================================================ #
@@ -94,17 +104,17 @@ Button(buttons_Frame, text='Generate token', font='helvetica 15',
 # ====================================== PAST APPOINTMENTS ================================================ #
 
 def showPastAppointmentsWindow(p_id, nm):
-    win = Toplevel(root)
-    win.focus_force()
-    win.title(f'Appointment history for {nm}')
+    pastApp_Window = Toplevel(root)
+    pastApp_Window.focus_force()
+    pastApp_Window.title(f'Appointment history for {nm}')
     appointments = fns.getPastAppointments(p_id)
     appointments.insert(0, ('Reference id', 'Doctor',
                         'Booking date', 'Appointment date', 'Status'))
     for i in range(len(appointments)):
         for j in range(len(appointments[i])):
-            Label(win, text=appointments[i][j], width=30, font='comicsans 10', relief=SUNKEN).grid(
+            Label(pastApp_Window, text=appointments[i][j], width=30, font='comicsans 10', relief=SUNKEN).grid(
                 row=i, column=j)
-    win.bind('<FocusOut>', lambda e:  win.destroy())
+    pastApp_Window.bind('<FocusOut>', lambda e:  pastApp_Window.destroy())
 
 # ====================================== PAST APPOINTMENTS ================================================ #
 
@@ -164,39 +174,7 @@ exUserSubmit_Button = Button(
 exUserSubmit_Button.pack()
 
 # ============================== EXISTING USER APPOINTMENT ======================================== #
-
-
 # =================================== BOOK APPOINTMENT ======================================== #
-
-# dummy list of doctors, to be taken from db
-lst = [
-    'Dr. Manoj Mathew (Pediatrics)',
-
-    'Dr. Rahul Nair (Pediatrics)',
-
-    'Dr. Sanjeev Menon (Pediatrics)',
-
-    'Dr. Anakha Anil (Pediatrics)',
-
-    'Dr. Arun Sanil (Pediatrics)',
-
-    'Dr. Dheeraj (Pediatrics)',
-
-    'Dr. Nizam Salim (Pediatrics)',
-
-    'Dr. Mohan Kumar (Pediatrics)',
-
-    'Dr. Rayhan Mohammed (Pediatrics)',
-
-    'Dr. Anoop Menon (Pediatrics)',
-
-    'Dr. Prithviraj Sukumaran (Pediatrics)',
-
-    'Dr. Manju Warrier (Pediatrics)',
-
-    'Dr. Anna Ben (Pediatrics)',
-
-]
 
 
 def isAppointmentBeforeToday(app_date):
@@ -315,9 +293,10 @@ bookAppSubmit_Button = Button(bookAppSubmit_Frame, text='Book Appointment',
                               font='sans 13', command=handleAppointmentSubmit)
 bookAppSubmit_Button.pack(pady=10)
 
+docDropdownList = fns.getDoctorsForDropDown()
 
 # adds values of the list to dropbox
-bookAppDoc_Dropbox['values'] = lst
+bookAppDoc_Dropbox['values'] = docDropdownList
 
 # =================================== BOOK APPOINTMENT ======================================== #
 
@@ -463,6 +442,148 @@ genTokenSubmit_Button = Button(
 genTokenSubmit_Button.pack(pady=10)
 
 # =================================== GENERATE TOKEN ======================================== #
+# =================================== MANAGE DOCTORS ======================================== #
+
+actionButtons_Frame = Frame(manageDoctors_Screen)
+
+
+def handleDocSubmit(nm, dpt, sal, exp, win, origin, did="", docListId=""):
+    if nm and dpt and sal and exp:
+        if origin == 'add':
+            newDoc = fns.addDoctor(nm, dpt, sal, exp)
+            docList.insert("", END, values=newDoc)
+            win.destroy()
+        else:
+            fns.updateDoctor(did, nm, dpt, sal, exp)
+            docList.delete(docListId[0])
+            docList.insert("", docListId[1], values=(did, nm, dpt, sal, exp))
+            win.destroy()
+
+
+def showDoctorInputWindow(origin, name="", dept="", sal="", exp="", did="", docListId=""):
+    docNameVar = StringVar(value=name)
+    deptVar = StringVar(value=dept)
+    salVar = StringVar(value=sal)
+    expVar = StringVar(value=exp)
+
+    addDoc_Window = Toplevel(root)
+    addDoc_Window.title("Add Doctor")
+    addDoc_Window.geometry("700x400")
+    addDoc_Window.focus_force()
+    addDoc_Label = Label(addDoc_Window, text="Add Doctor",
+                         font="comicsans 20 underline")
+    addDoc_Label.place(relx=0.5, rely=0.1, anchor=CENTER)
+
+    addDocForm_Frame = Frame(addDoc_Window, borderwidth=5, relief=GROOVE)
+    addDocForm_Frame.place(relx=0.5, rely=0.5, anchor=CENTER)
+
+    addDocName_Label = Label(addDocForm_Frame, text="Name", font="sans 14")
+    addDocDept_Label = Label(
+        addDocForm_Frame, text="Department", font="sans 14")
+    addDocSal_Label = Label(addDocForm_Frame, text="Salary", font="sans 14")
+    addDocExp_Label = Label(
+        addDocForm_Frame, text="Experience", font="sans 14")
+
+    addDocName_Entry = Entry(
+        addDocForm_Frame, font='sans 14', borderwidth=2, relief=SUNKEN, textvariable=docNameVar)
+    addDocDept_Entry = Entry(
+        addDocForm_Frame, font='sans 14', borderwidth=2, relief=SUNKEN, textvariable=deptVar)
+    addDocSal_Entry = Entry(
+        addDocForm_Frame, font='sans 14', borderwidth=2, relief=SUNKEN, textvariable=salVar)
+    addDocExp_Entry = Entry(
+        addDocForm_Frame, font='sans 14', borderwidth=2, relief=SUNKEN, textvariable=expVar)
+
+    addDocName_Label.grid(row=0, column=0, padx=10, pady=10)
+    addDocDept_Label.grid(row=1, column=0, padx=10, pady=10)
+    addDocSal_Label.grid(row=2, column=0, padx=10, pady=10)
+    addDocExp_Label.grid(row=3, column=0, padx=10, pady=10)
+
+    addDocName_Entry.grid(row=0, column=1, padx=10, pady=10)
+    addDocDept_Entry.grid(row=1, column=1, padx=10, pady=10)
+    addDocSal_Entry.grid(row=2, column=1, padx=10, pady=10)
+    addDocExp_Entry.grid(row=3, column=1, padx=10, pady=10)
+
+    addDocSubmit_Frame = Frame(addDocForm_Frame)
+    addDocSubmit_Frame.grid(row=4, columnspan=2)
+
+    addDocSubmit_Button = Button(
+        addDocSubmit_Frame, text="Submit", font="sans 14", command=lambda: handleDocSubmit(docNameVar.get(), deptVar.get(), salVar.get(), expVar.get(), addDoc_Window, origin, did, docListId))
+    addDocSubmit_Button.pack(pady=5)
+
+
+def removeDoctor():
+    if docList.selection():
+        docListId = docList.selection()[0]
+        docListIds = docList.get_children()
+        ind = docListIds.index(docListId)
+        tempDoctors = fns.getAllDoctors()
+        res = messagebox.askyesno(
+            'Delete doctor', f'Are you sure you want to delete {tempDoctors[ind][1]}')
+        if res:
+            fns.deleteDoctor(tempDoctors[ind][0])
+            docList.delete(docListId)
+
+
+def updateDoc():
+    if docList.selection():
+        docListId = docList.selection()[0]
+        docListIds = docList.get_children()
+        ind = docListIds.index(docListId)
+        tempDoctors = fns.getAllDoctors()
+        (did, name, dpt, sal, exp) = tempDoctors[ind]
+        showDoctorInputWindow('update', name, dpt, sal,
+                              exp, did=did, docListId=(docListId, ind))
+
+
+Button(actionButtons_Frame, text="Add doctor", font='comicsans 11', width=20,
+       command=lambda: showDoctorInputWindow('add')).pack(pady=10)
+Button(actionButtons_Frame, text="Update doctor", font='comicsans 11', width=20,
+       command=updateDoc).pack(pady=10)
+Button(actionButtons_Frame, text="Delete doctor", font='comicsans 11', width=20,
+       command=removeDoctor).pack(pady=10)
+
+actionButtons_Frame.pack(side='left', fill=Y)
+
+columns = ('sl', 'docName', 'deptName', 'sal', 'exp')
+
+docList = ttk.Treeview(manageDoctors_Screen, columns=columns, show="headings")
+
+docListStyle = ttk.Style()
+
+docListStyle.configure("Treeview", font=('comicsans', 12), rowheight=35)
+docListStyle.configure('Treeview.Heading', font=('comicsans', 11))
+
+columnsDict = {
+    'sl': 'Doctor ID',
+    'docName': 'Doctor name',
+    'deptName': 'Department',
+    'sal': 'Salary',
+    'exp': 'Experience'
+}
+
+for column in columnsDict:
+    docList.heading(column, text=columnsDict[column])
+
+for i in range(1, 6):
+    docList.column(f"#{i}", anchor=CENTER)
+
+
+doctors = fns.getAllDoctors()
+
+for doctor in doctors:
+    docList.insert("", END, values=doctor)
+
+docList.pack(expand=True, fill=BOTH)
+
+scrollbar = ttk.Scrollbar(docList,
+                          orient=VERTICAL, command=docList.yview)
+docList.configure(yscroll=scrollbar.set)
+scrollbar.pack(side=RIGHT, fill=Y)
+
+# =================================== MANAGE DOCTORS ======================================== #
+# =================================== MANAGE PATIENTS ======================================== #
+
+# =================================== MANAGE PATIENTS ======================================== #
 
 
 root.mainloop()

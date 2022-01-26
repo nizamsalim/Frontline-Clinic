@@ -52,6 +52,18 @@ def initDatabase():
                     )
                 """
             )
+            db.execute(
+                """
+                    CREATE TABLE IF NOT EXISTS doctors(
+                        doc_id INT(5) PRIMARY KEY AUTO_INCREMENT,
+                        doctor_name VARCHAR(50),
+                        dept VARCHAR(25),
+                        salary INT(6),
+                        experience INT(2)
+                    )
+                """
+            )
+            db.execute("ALTER TABLE doctors AUTO_INCREMENT=1000")
             return True
     except:
         return False
@@ -161,6 +173,38 @@ def sendWhatsappConfirmation(name, docName, date, time, refId, p_id):
     phone = f"+91{phone}"
     message = f"Hello {name}\nYour appointment with {docName} at Frontline Clinic on {date} during {time} has been confirmed.\nPlease note appointment reference number {refId}.\nThank you. "
     whatsapp.sendwhatmsg_instantly(phone, message, tab_close=True)
+
+
+def addDoctor(d_name, dept, sal, exp):
+    db.execute(
+        f"INSERT INTO doctors(doctor_name,dept,salary,experience) VALUES('{d_name}','{dept}',{sal},{exp})")
+    conn.commit()
+    db.execute("SELECT * FROM doctors ORDER BY doc_id desc LIMIT 1")
+    return db.fetchone()
+
+
+def getAllDoctors():
+    db.execute("SELECT * FROM doctors")
+    return db.fetchall()
+
+
+def getDoctorsForDropDown():
+    db.execute("SELECT doctor_name,dept FROM doctors")
+    lst = []
+    for doctor in db.fetchall():
+        lst.append(f"{doctor[0]} ({doctor[1]}) ")
+    return lst
+
+
+def updateDoctor(d_id, name, dpt, sal, exp):
+    db.execute(
+        f"UPDATE doctors SET doctor_name='{name}',dept='{dpt}',salary={int(sal)},experience={int(exp)} WHERE doc_id={d_id}")
+    conn.commit()
+
+
+def deleteDoctor(d_id):
+    db.execute(f"DELETE FROM doctors WHERE doc_id={d_id}")
+    conn.commit()
 
 
 def closeDatabase():
