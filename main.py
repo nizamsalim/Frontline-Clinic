@@ -1,9 +1,6 @@
 from tkinter import *
 from tkinter import ttk, messagebox
-
-from matplotlib.pyplot import fill
 import functions as fns
-import mysql.connector as ms
 import tkcalendar as tkcal
 import datetime
 
@@ -11,7 +8,7 @@ import datetime
 # main window
 root = Tk()
 
-root.title('Appointment system')
+root.title('Frontline Clinic')
 
 # image object for icon
 icon = PhotoImage(file="./logo1.png")
@@ -19,8 +16,8 @@ root.iconphoto(1, icon)
 
 # dimensions of window
 root.geometry('1200x800')
-# root.maxsize(500,500)
-root.minsize(550, 350)
+# root.maxsize(1200, 800)
+# root.minsize(1200, 800)
 
 
 # db config
@@ -28,29 +25,10 @@ isConnected = fns.initDatabase()
 if isConnected == False:
     messagebox.showerror("Error", "Database connection error")
     root.destroy()
+    exit()
 
 # tab navigation
 tabs = ttk.Notebook(root)
-
-
-def handleTabChange(e):
-    if tabs.index(CURRENT) != 4:
-        tabs.hide(4)
-        bookAppPatientId_Entry.delete(0, END)
-        bookAppPatientName_Entry.delete(0, END)
-        bookAppDoc_Var.set('')
-        time_Var.set('9 a.m - 12 p.m')
-        calendar.selection_clear()
-    # clear all entries
-    exUserId_Entry.delete(0, END)
-    newUserName_Entry.delete(0, END)
-    newUserPlace_Entry.delete(0, END)
-    newUserAge_Entry.delete(0, END)
-    newUserPhone_Entry.delete(0, END)
-    genTokenRefNum_Entry.delete(0, END)
-
-
-tabs.bind('<<NotebookTabChanged>>', handleTabChange)
 
 # screens
 home_Screen = Frame(root)
@@ -60,6 +38,7 @@ generateToken_Screen = Frame(root)
 bookAppointment_Screen = Frame(root)
 manageDoctors_Screen = Frame(root)
 managePatients_Screen = Frame(root)
+viewAppointments_Screen = Frame(root)
 
 # adding screens to the tab navigation structure
 tabs.add(home_Screen, text='Home')
@@ -69,6 +48,7 @@ tabs.add(generateToken_Screen, text='Generate token')
 tabs.add(bookAppointment_Screen, text='Book Appointment')
 tabs.add(manageDoctors_Screen, text='Manage doctors')
 tabs.add(managePatients_Screen, text='Manage patients')
+tabs.add(viewAppointments_Screen, text='View appointments')
 
 # hiding temporary tab
 tabs.hide(4)
@@ -83,7 +63,7 @@ buttons_Frame = Frame(home_Screen)
 buttons_Frame.place(relx=0.5, rely=0.5, anchor=CENTER)
 
 welcome_Label = Label(
-    buttons_Frame, text='Frontline Clinic \n Appointments System', font='algerian 30')
+    buttons_Frame, text='Frontline Clinic', font='algerian 30')
 welcome_Label.pack(pady=10)
 
 Button(buttons_Frame, text='Appointment for existing user',
@@ -93,9 +73,11 @@ Button(buttons_Frame, text='Appointment for new user', font='helvetica 15',
 Button(buttons_Frame, text='Generate token', font='helvetica 15',
        width=25, command=lambda: tabs.select(3)).pack(pady=10)
 Button(buttons_Frame, text='Manage doctors', font='helvetica 15',
-       width=25, command=lambda: tabs.select(5)).pack(pady=30)
+       width=25, command=lambda: tabs.select(5)).pack(pady=10)
 Button(buttons_Frame, text='Manage patients', font='helvetica 15',
-       width=25, command=lambda: tabs.select(6)).pack()
+       width=25, command=lambda: tabs.select(6)).pack(pady=10)
+Button(buttons_Frame, text='View appointments', font='helvetica 15',
+       width=25, command=lambda: tabs.select(7)).pack(pady=10)
 
 
 # ====================================== HOME PAGE ================================================ #
@@ -213,9 +195,9 @@ def handleAppointmentSubmit():
                 doc_name, p_id, time, date)
             messagebox.showinfo('Appointment booked',
                                 f'Appointment for {p_name} booked with {doc_name} on {date} during {time}. Please note reference number {app_id}')
-            fns.sendWhatsappConfirmation(
-                p_name, doc_name, date, time, app_id, p_id)
-            root.focus_force()
+            # fns.sendWhatsappConfirmation(
+            #     p_name, doc_name, date, time, app_id, p_id)
+            # root.focus_force()
             tabs.select(0)
     else:
         k = 1
@@ -293,10 +275,10 @@ bookAppSubmit_Button = Button(bookAppSubmit_Frame, text='Book Appointment',
                               font='sans 13', command=handleAppointmentSubmit)
 bookAppSubmit_Button.pack(pady=10)
 
-docDropdownList = fns.getDoctorsForDropDown()
 
-# adds values of the list to dropbox
-bookAppDoc_Dropbox['values'] = docDropdownList
+def populateDoctors():
+    docDropdownList = fns.getDoctorsForDropDown()
+    bookAppDoc_Dropbox['values'] = docDropdownList
 
 # =================================== BOOK APPOINTMENT ======================================== #
 
@@ -444,11 +426,10 @@ genTokenSubmit_Button.pack(pady=10)
 # =================================== GENERATE TOKEN ======================================== #
 # =================================== MANAGE DOCTORS ======================================== #
 
-actionButtons_Frame = Frame(manageDoctors_Screen)
-
 
 def handleDocSubmit(nm, dpt, sal, exp, win, origin, did="", docListId=""):
     if nm and dpt and sal and exp:
+        nm = f"Dr. {nm}"
         if origin == 'add':
             newDoc = fns.addDoctor(nm, dpt, sal, exp)
             docList.insert("", END, values=newDoc)
@@ -467,10 +448,10 @@ def showDoctorInputWindow(origin, name="", dept="", sal="", exp="", did="", docL
     expVar = StringVar(value=exp)
 
     addDoc_Window = Toplevel(root)
-    addDoc_Window.title("Add Doctor")
+    addDoc_Window.title(f"{origin.capitalize()} Doctor")
     addDoc_Window.geometry("700x400")
     addDoc_Window.focus_force()
-    addDoc_Label = Label(addDoc_Window, text="Add Doctor",
+    addDoc_Label = Label(addDoc_Window, text=f"{origin.capitalize()} Doctor",
                          font="comicsans 20 underline")
     addDoc_Label.place(relx=0.5, rely=0.1, anchor=CENTER)
 
@@ -535,6 +516,8 @@ def updateDoc():
                               exp, did=did, docListId=(docListId, ind))
 
 
+actionButtons_Frame = Frame(manageDoctors_Screen)
+
 Button(actionButtons_Frame, text="Add doctor", font='comicsans 11', width=20,
        command=lambda: showDoctorInputWindow('add')).pack(pady=10)
 Button(actionButtons_Frame, text="Update doctor", font='comicsans 11', width=20,
@@ -544,16 +527,17 @@ Button(actionButtons_Frame, text="Delete doctor", font='comicsans 11', width=20,
 
 actionButtons_Frame.pack(side='left', fill=Y)
 
-columns = ('sl', 'docName', 'deptName', 'sal', 'exp')
+docColumns = ('sl', 'docName', 'deptName', 'sal', 'exp')
 
-docList = ttk.Treeview(manageDoctors_Screen, columns=columns, show="headings")
+docList = ttk.Treeview(manageDoctors_Screen,
+                       columns=docColumns, show="headings")
 
 docListStyle = ttk.Style()
 
 docListStyle.configure("Treeview", font=('comicsans', 12), rowheight=35)
 docListStyle.configure('Treeview.Heading', font=('comicsans', 11))
 
-columnsDict = {
+docColumnsDict = {
     'sl': 'Doctor ID',
     'docName': 'Doctor name',
     'deptName': 'Department',
@@ -561,8 +545,8 @@ columnsDict = {
     'exp': 'Experience'
 }
 
-for column in columnsDict:
-    docList.heading(column, text=columnsDict[column])
+for column in docColumnsDict:
+    docList.heading(column, text=docColumnsDict[column])
 
 for i in range(1, 6):
     docList.column(f"#{i}", anchor=CENTER)
@@ -575,15 +559,189 @@ for doctor in doctors:
 
 docList.pack(expand=True, fill=BOTH)
 
-scrollbar = ttk.Scrollbar(docList,
-                          orient=VERTICAL, command=docList.yview)
-docList.configure(yscroll=scrollbar.set)
-scrollbar.pack(side=RIGHT, fill=Y)
 
 # =================================== MANAGE DOCTORS ======================================== #
 # =================================== MANAGE PATIENTS ======================================== #
 
+patientButtons_Frame = Frame(managePatients_Screen)
+
+
+def removePatient():
+    if patientList.selection():
+        patientListId = patientList.selection()[0]
+        patientListIds = patientList.get_children()
+        ind = patientListIds.index(patientListId)
+        tempPatients = fns.getAllPatients()
+        res = messagebox.askyesno(
+            'Delete doctor', f'Are you sure you want to delete {tempPatients[ind][1]}')
+        if res:
+            fns.deletePatient(tempPatients[ind][0])
+            patientList.delete(patientListId)
+
+
+def handlePatientUpdateSubmit(pid, nm, age, phone, win, patListId):
+    if nm and age and phone:
+        updatedPatient = fns.updatePatient(pid, nm, age, phone)
+        patientList.delete(patListId[0])
+        patientList.insert("", patListId[1], values=updatedPatient)
+        win.destroy()
+
+
+def updatePatient():
+    if patientList.selection():
+        patientListId = patientList.selection()[0]
+        patientListIds = patientList.get_children()
+        ind = patientListIds.index(patientListId)
+        tempPatients = fns.getAllPatients()
+        (pid, name, age, phone, visits) = tempPatients[ind]
+        showPatientUpdateWindow(pid, name, age, phone, (patientListId, ind))
+
+
+def showPatientUpdateWindow(pid, name, age, phone, patListId):
+    patNameVar = StringVar(value=name)
+    ageVar = StringVar(value=age)
+    phoneVar = StringVar(value=phone)
+
+    addPatient_Window = Toplevel(root)
+    addPatient_Window.title(f"Update patient")
+    addPatient_Window.geometry("700x400")
+    addPatient_Window.focus_force()
+    addPatient_Label = Label(addPatient_Window, text=f"Update patient",
+                             font="comicsans 20 underline")
+    addPatient_Label.place(relx=0.5, rely=0.1, anchor=CENTER)
+
+    addPatientForm_Frame = Frame(
+        addPatient_Window, borderwidth=5, relief=GROOVE)
+    addPatientForm_Frame.place(relx=0.5, rely=0.5, anchor=CENTER)
+
+    addPatientName_Label = Label(
+        addPatientForm_Frame, text="Name", font="sans 14")
+    addPatientDept_Label = Label(
+        addPatientForm_Frame, text="Age", font="sans 14")
+    addPatientSal_Label = Label(
+        addPatientForm_Frame, text="Phone", font="sans 14")
+
+    addPatientName_Entry = Entry(
+        addPatientForm_Frame, font='sans 14', borderwidth=2, relief=SUNKEN, textvariable=patNameVar)
+    addPatientDept_Entry = Entry(
+        addPatientForm_Frame, font='sans 14', borderwidth=2, relief=SUNKEN, textvariable=ageVar)
+    addPatientSal_Entry = Entry(
+        addPatientForm_Frame, font='sans 14', borderwidth=2, relief=SUNKEN, textvariable=phoneVar)
+
+    addPatientName_Label.grid(row=0, column=0, padx=10, pady=10)
+    addPatientDept_Label.grid(row=1, column=0, padx=10, pady=10)
+    addPatientSal_Label.grid(row=2, column=0, padx=10, pady=10)
+
+    addPatientName_Entry.grid(row=0, column=1, padx=10, pady=10)
+    addPatientDept_Entry.grid(row=1, column=1, padx=10, pady=10)
+    addPatientSal_Entry.grid(row=2, column=1, padx=10, pady=10)
+
+    addPatientSubmit_Frame = Frame(addPatientForm_Frame)
+    addPatientSubmit_Frame.grid(row=4, columnspan=2)
+
+    addPatientSubmit_Button = Button(
+        addPatientSubmit_Frame, text="Submit", font="sans 14", command=lambda: handlePatientUpdateSubmit(pid, patNameVar.get(), ageVar.get(), phoneVar.get(),  addPatient_Window, patListId))
+    addPatientSubmit_Button.pack(pady=5)
+
+
+Button(patientButtons_Frame, text="Update patient", font='comicsans 11', width=20,
+       command=updatePatient).pack(pady=10)
+Button(patientButtons_Frame, text="Delete patient", font='comicsans 11', width=20,
+       command=removePatient).pack(pady=10)
+
+patientButtons_Frame.pack(side='left', fill=Y)
+
+patientColumns = ('id', 'name', 'age', 'phone', 'visits')
+
+patientList = ttk.Treeview(managePatients_Screen,
+                           columns=patientColumns, show='headings')
+
+patientColumnsDict = {
+    'id': 'Patient id',
+    'name': 'Name',
+    'age': "Age",
+    'phone': 'Phone',
+    'visits': 'Visits'
+}
+
+for column in patientColumnsDict:
+    patientList.heading(column, text=patientColumnsDict[column])
+for i in range(1, 6):
+    patientList.column(f"#{i}", anchor=CENTER)
+
+
+def populatePatients():
+    for item in patientList.get_children():
+        patientList.delete(item)
+    patients = fns.getAllPatients()
+    for patient in patients:
+        patientList.insert("", END, values=patient)
+
+
+patientList.pack(expand=True, fill=BOTH)
+
+
 # =================================== MANAGE PATIENTS ======================================== #
+# =================================== VIEW APPOINTMENTS ======================================== #
+# appointmentsbutton_Frame=Frame(viewAppointments_Screen)
+
+appointmentColumns = ('refno', 'docname', 'patname',
+                      'appdate', 'time', 'status')
+
+appointmentlist = ttk.Treeview(
+    viewAppointments_Screen, columns=appointmentColumns, show="headings")
+
+
+appointmentListDict = {
+    'refno': 'Reference number',
+    'docname': 'Doctor name',
+    'patname': 'Patient name',
+    'appdate': 'Appointment date',
+    'time': 'Time',
+    'status': 'Status'
+}
+
+for column in appointmentListDict:
+    appointmentlist.heading(column, text=appointmentListDict[column])
+for i in range(1, 7):
+    appointmentlist.column(f"#{i}", anchor=CENTER)
+
+
+def populateAppointments():
+    for item in appointmentlist.get_children():
+        appointmentlist.delete(item)
+    appointments = fns.getAllAppointments()
+    for appointment in appointments:
+        appointmentlist.insert("", END, values=appointment)
+
+
+appointmentlist.pack(expand=True, fill=BOTH)
+
+
+# =================================== VIEW APPOINTMENTS ======================================== #
+def handleTabChange(e):
+    if tabs.index(CURRENT) != 4:
+        tabs.hide(4)
+        bookAppPatientId_Entry.delete(0, END)
+        bookAppPatientName_Entry.delete(0, END)
+        bookAppDoc_Var.set('')
+        time_Var.set('9 a.m - 12 p.m')
+        calendar.selection_clear()
+    if tabs.index(CURRENT) == 4:
+        populateDoctors()
+    if tabs.index(CURRENT) == 6:
+        populatePatients()
+    if tabs.index(CURRENT) == 7:
+        populateAppointments()
+    exUserId_Entry.delete(0, END)
+    newUserName_Entry.delete(0, END)
+    newUserPlace_Entry.delete(0, END)
+    newUserAge_Entry.delete(0, END)
+    newUserPhone_Entry.delete(0, END)
+    genTokenRefNum_Entry.delete(0, END)
+
+
+tabs.bind('<<NotebookTabChanged>>', handleTabChange)
 
 
 root.mainloop()

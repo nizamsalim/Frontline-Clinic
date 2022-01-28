@@ -207,6 +207,30 @@ def deleteDoctor(d_id):
     conn.commit()
 
 
+def getAllPatients():
+    db.execute("SELECT id,name,age,phone,visits FROM patients")
+    return db.fetchall()
+
+
+def updatePatient(p_id, name, age, phone):
+    db.execute(
+        f"UPDATE patients SET name='{name}',age='{age}',phone='{phone}' WHERE id={p_id}")
+    conn.commit()
+    db.execute(
+        f"SELECT id,name,age,phone,visits FROM patients WHERE id={p_id}")
+    return db.fetchone()
+
+
+def deletePatient(p_id):
+    db.execute(f"DELETE FROM patients WHERE id={p_id}")
+    conn.commit()
+
+
+def getAllAppointments():
+    db.execute("SELECT app_id,doctor_name,name,appointment_date,time,status FROM appointments,patients WHERE patients.id=appointments.patient_id ORDER BY status DESC")
+    return db.fetchall()
+
+
 def closeDatabase():
     db.close()
     conn.close()
