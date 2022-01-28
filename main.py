@@ -15,7 +15,7 @@ icon = PhotoImage(file="./logo1.png")
 root.iconphoto(1, icon)
 
 # dimensions of window
-root.geometry('1200x800')
+root.geometry('1000x700')
 # root.maxsize(1200, 800)
 # root.minsize(1200, 800)
 
@@ -195,9 +195,6 @@ def handleAppointmentSubmit():
                 doc_name, p_id, time, date)
             messagebox.showinfo('Appointment booked',
                                 f'Appointment for {p_name} booked with {doc_name} on {date} during {time}. Please note reference number {app_id}')
-            # fns.sendWhatsappConfirmation(
-            #     p_name, doc_name, date, time, app_id, p_id)
-            # root.focus_force()
             tabs.select(0)
     else:
         k = 1
@@ -429,7 +426,6 @@ genTokenSubmit_Button.pack(pady=10)
 
 def handleDocSubmit(nm, dpt, sal, exp, win, origin, did="", docListId=""):
     if nm and dpt and sal and exp:
-        nm = f"Dr. {nm}"
         if origin == 'add':
             newDoc = fns.addDoctor(nm, dpt, sal, exp)
             docList.insert("", END, values=newDoc)
@@ -467,6 +463,7 @@ def showDoctorInputWindow(origin, name="", dept="", sal="", exp="", did="", docL
 
     addDocName_Entry = Entry(
         addDocForm_Frame, font='sans 14', borderwidth=2, relief=SUNKEN, textvariable=docNameVar)
+    addDocName_Entry.focus_force()
     addDocDept_Entry = Entry(
         addDocForm_Frame, font='sans 14', borderwidth=2, relief=SUNKEN, textvariable=deptVar)
     addDocSal_Entry = Entry(
@@ -558,8 +555,6 @@ for doctor in doctors:
     docList.insert("", END, values=doctor)
 
 docList.pack(expand=True, fill=BOTH)
-
-
 # =================================== MANAGE DOCTORS ======================================== #
 # =================================== MANAGE PATIENTS ======================================== #
 
@@ -623,6 +618,7 @@ def showPatientUpdateWindow(pid, name, age, phone, patListId):
 
     addPatientName_Entry = Entry(
         addPatientForm_Frame, font='sans 14', borderwidth=2, relief=SUNKEN, textvariable=patNameVar)
+    addPatientName_Entry.focus_force()
     addPatientDept_Entry = Entry(
         addPatientForm_Frame, font='sans 14', borderwidth=2, relief=SUNKEN, textvariable=ageVar)
     addPatientSal_Entry = Entry(

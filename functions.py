@@ -1,6 +1,5 @@
 import datetime
 import mysql.connector as ms
-import pywhatkit.whats as whatsapp
 
 conn, db = None, None
 
@@ -165,14 +164,6 @@ def getPastAppointments(p_id):
     db.execute(
         f"SELECT app_id, doctor_name, booking_date, appointment_date, status FROM appointments WHERE patient_id={p_id}")
     return db.fetchall()
-
-
-def sendWhatsappConfirmation(name, docName, date, time, refId, p_id):
-    db.execute(f"SELECT phone FROM patients WHERE id={p_id}")
-    (phone,) = db.fetchone()
-    phone = f"+91{phone}"
-    message = f"Hello {name}\nYour appointment with {docName} at Frontline Clinic on {date} during {time} has been confirmed.\nPlease note appointment reference number {refId}.\nThank you. "
-    whatsapp.sendwhatmsg_instantly(phone, message, tab_close=True)
 
 
 def addDoctor(d_name, dept, sal, exp):
