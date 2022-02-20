@@ -3,6 +3,8 @@ import mysql.connector as ms
 
 conn, db = None, None
 
+"""initialise mysql connection and creates database and tables if it doesnt exist"""
+
 
 def initDatabase():
     try:
@@ -68,6 +70,9 @@ def initDatabase():
         return False
 
 
+"""function to fetch patient name by id"""
+
+
 def getPatientName(patientId):
     db.execute(f'SELECT * from patients WHERE id={patientId}')
     data = db.fetchone()
@@ -77,6 +82,9 @@ def getPatientName(patientId):
         return data[1]
 
 
+"""function to create new user in the database"""
+
+
 def createNewUser(name, age, phone, place, visits=0):
     db.execute(
         f"INSERT INTO patients(name,age,phone,place,visits) VALUES('{name}',{age},'{phone}','{place}',{visits})")
@@ -84,6 +92,9 @@ def createNewUser(name, age, phone, place, visits=0):
     db.execute("SELECT id FROM patients ORDER BY id desc LIMIT 1")
     id = db.fetchone()
     return id[0]
+
+
+"""function to create new appointment record in the database"""
 
 
 def createNewAppointment(d_name, p_id, time, date, status='pending'):
@@ -97,15 +108,24 @@ def createNewAppointment(d_name, p_id, time, date, status='pending'):
     return id[0]
 
 
+"""function to update number of visits"""
+
+
 def updateNumberOfVisits(p_id):
     db.execute(f'UPDATE patients SET visits=visits+1 WHERE id={p_id}')
     conn.commit()
+
+
+"""function to update appointment status"""
 
 
 def updateAppointmentStatus(p_id, status):
     db.execute(
         f'UPDATE appointments SET status="{status}" WHERE patient_id={p_id}')
     conn.commit()
+
+
+"""function to save the token in the db"""
 
 
 def saveToken(tkn):
@@ -129,6 +149,9 @@ def saveToken(tkn):
             conn.commit()
 
 
+"""function to get initial token count, the first time the app is run"""
+
+
 def getInitialTokenNumber():
     date = datetime.datetime.now().strftime('%d-%m-%y')
     db.execute('SELECT * FROM tokens')
@@ -146,6 +169,9 @@ def getInitialTokenNumber():
         return initToken
 
 
+"""function to get name of patient by appointment reference id"""
+
+
 def getPatientIdByAppId(appId):
     db.execute(f'SELECT patient_id FROM appointments WHERE app_id={appId}')
     data = db.fetchone()
@@ -154,16 +180,25 @@ def getPatientIdByAppId(appId):
     return data[0]
 
 
+"""function to check status of appointment"""
+
+
 def isAppointmentPending(appId):
     db.execute(f"SELECT status from appointments WHERE app_id={appId}")
     data = db.fetchone()
     return True if data[0] == 'pending' else False
 
 
+"""function to get past appointments"""
+
+
 def getPastAppointments(p_id):
     db.execute(
         f"SELECT app_id, doctor_name, booking_date, appointment_date, status FROM appointments WHERE patient_id={p_id}")
     return db.fetchall()
+
+
+"""function to add new doctor"""
 
 
 def addDoctor(d_name, dept, sal, exp):
@@ -174,9 +209,15 @@ def addDoctor(d_name, dept, sal, exp):
     return db.fetchone()
 
 
+"""function to get list of doctors"""
+
+
 def getAllDoctors():
     db.execute("SELECT * FROM doctors")
     return db.fetchall()
+
+
+"""function to get list of doctors for dropdown menu"""
 
 
 def getDoctorsForDropDown():
@@ -187,10 +228,16 @@ def getDoctorsForDropDown():
     return lst
 
 
+"""function to update a doctor"""
+
+
 def updateDoctor(d_id, name, dpt, sal, exp):
     db.execute(
         f"UPDATE doctors SET doctor_name='{name}',dept='{dpt}',salary={int(sal)},experience={int(exp)} WHERE doc_id={d_id}")
     conn.commit()
+
+
+"""function to delete a doctor"""
 
 
 def deleteDoctor(d_id):
@@ -198,9 +245,15 @@ def deleteDoctor(d_id):
     conn.commit()
 
 
+"""function to get list of all patients"""
+
+
 def getAllPatients():
     db.execute("SELECT id,name,age,phone,visits FROM patients")
     return db.fetchall()
+
+
+"""function to update a patient"""
 
 
 def updatePatient(p_id, name, age, phone):
@@ -212,14 +265,23 @@ def updatePatient(p_id, name, age, phone):
     return db.fetchone()
 
 
+"""function to delete a patient"""
+
+
 def deletePatient(p_id):
     db.execute(f"DELETE FROM patients WHERE id={p_id}")
     conn.commit()
 
 
+"""function to get list of all appointments"""
+
+
 def getAllAppointments():
     db.execute("SELECT app_id,doctor_name,name,appointment_date,time,status FROM appointments,patients WHERE patients.id=appointments.patient_id ORDER BY status DESC")
     return db.fetchall()
+
+
+"""close database"""
 
 
 def closeDatabase():
